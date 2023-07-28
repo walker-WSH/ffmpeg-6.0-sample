@@ -10,5 +10,13 @@
     <ClCompile Include="ffplay.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\fftools\cmdutils.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\fftools\cmdutils.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
