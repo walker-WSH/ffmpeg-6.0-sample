@@ -13,18 +13,18 @@
     <ClCompile Include="ffplay.c">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\fftools\cmdutils.c">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="..\fftools\opt_common.c">
+      <Filter>header</Filter>
+    </ClCompile>
+    <ClCompile Include="..\fftools\cmdutils.c">
       <Filter>header</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\fftools\cmdutils.h">
-      <Filter>source</Filter>
-    </ClInclude>
     <ClInclude Include="..\fftools\opt_common.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\fftools\cmdutils.h">
       <Filter>header</Filter>
     </ClInclude>
   </ItemGroup>
