@@ -321,7 +321,8 @@ void uninit_parse_context(OptionParseContext *octx);
 /**
  * Find the '-loglevel' option in the command line args and apply it.
  */
-void parse_loglevel(int argc, char **argv, const OptionDef *options);
+ //wangshaohui
+//void parse_loglevel(int argc, char **argv, const OptionDef *options);
 
 /**
  * Return index of option opt in argv or 0 if not found.

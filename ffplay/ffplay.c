@@ -60,7 +60,6 @@
 #include <SDL_thread.h>
 
 #include "cmdutils.h"
-#include "opt_common.h"
 
 const char program_name[] = "ffplay";
 const int program_birth_year = 2003;
@@ -3614,7 +3613,8 @@ static int opt_codec(void* optctx, const char* opt, const char* arg)
 static int dummy;
 
 static const OptionDef options[] = {
-    CMDUTILS_COMMON_OPTIONS
+    //wangshaohui
+    //CMDUTILS_COMMON_OPTIONS
     { "x", HAS_ARG, {.func_arg = opt_width }, "force displayed width", "width" },
     { "y", HAS_ARG, {.func_arg = opt_height }, "force displayed height", "height" },
     { "fs", OPT_BOOL, { &is_full_screen }, "force full screen" },
@@ -3717,7 +3717,8 @@ int main(int argc, char** argv)
         init_dynload();
 
         av_log_set_flags(AV_LOG_SKIP_REPEATED);
-        parse_loglevel(argc, argv, options);
+        //wangshaohui
+        //parse_loglevel(argc, argv, options);
 
         /* register all codecs, demux and protocols */
 #if CONFIG_AVDEVICE
@@ -3728,7 +3729,8 @@ int main(int argc, char** argv)
         signal(SIGINT, sigterm_handler); /* Interrupt (ANSI).    */
         signal(SIGTERM, sigterm_handler); /* Termination (ANSI).  */
 
-        show_banner(argc, argv, options);
+        //wangshaohui
+        //show_banner(argc, argv, options);
 
         parse_options(NULL, argc, argv, options, opt_input_file);
 

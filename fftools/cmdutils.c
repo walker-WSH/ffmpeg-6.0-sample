@@ -49,7 +49,6 @@
 #include "libavutil/opt.h"
 #include "cmdutils.h"
 #include "fopen_utf8.h"
-#include "opt_common.h"
 #ifdef _WIN32
 #include <windows.h>
 #include "compat/w32dlfcn.h"
@@ -471,6 +470,9 @@ static void check_options(const OptionDef *po)
     }
 }
 
+
+//wangshaohui
+/*
 void parse_loglevel(int argc, char **argv, const OptionDef *options)
 {
     int idx = locate_option(argc, argv, options, "loglevel");
@@ -501,7 +503,7 @@ void parse_loglevel(int argc, char **argv, const OptionDef *options)
     idx = locate_option(argc, argv, options, "hide_banner");
     if (idx)
         hide_banner = 1;
-}
+}*/
 
 static const AVOption *opt_find(void *obj, const char *name, const char *unit,
                             int opt_flags, int search_flags)
