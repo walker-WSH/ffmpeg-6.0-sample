@@ -23,6 +23,11 @@
   * simple media player based on the FFmpeg libraries
   */
 
+//wangshaohui
+#ifndef CONFIG_AVFILTER
+#define CONFIG_AVFILTER
+#endif // !CONFIG_AVFILTER
+
 #include "config.h"
 #include "config_components.h"
 #include <inttypes.h>
