@@ -363,7 +363,11 @@ private:
 
         VideoState* video_state = nullptr;
 
+        // added by walker-WSH
         std::atomic<bool> stream_ready = false;
+        std::atomic<bool> video_included = false;
+        std::atomic<bool> audio_included = false;
+        std::atomic<double> duration_seconds = 0.0;
         const std::weak_ptr<ffplayer_event> event_cb;
 
         bool abort_play = false;
@@ -1586,6 +1590,17 @@ public:
                 }
                 set_clock(&is->extclk, get_clock(&is->extclk), is->extclk.serial);
                 is->paused = is->audclk.paused = is->vidclk.paused = is->extclk.paused = !is->paused;
+
+                auto cb = event_cb.lock();
+                if (cb) {
+                    if (is->paused)
+                    {
+                        cb->on_player_paused();
+                    }
+                    else {
+                        cb->on_player_resumed();
+                    }
+                }
         }
 
         void toggle_pause(VideoState* is)
@@ -3006,13 +3021,13 @@ public:
                         infinite_buffer = 1;
 
                 stream_ready = true;
+                video_included = is->video_stream >= 0;
+                audio_included = is->audio_stream >= 0;
+                duration_seconds = get_duration_seconds(is);
                 {
                     auto cb = event_cb.lock();
                     if (cb) {
-                        bool video = is->video_stream >= 0;
-                        bool audio = is->audio_stream >= 0;
-                        double dur = get_duration_seconds(is);
-                        cb->on_stream_ready(audio, video, dur);
+                        cb->on_stream_ready(audio_included.load(), video_included.load(), duration_seconds.load());
                     }
                 }
 
@@ -3099,14 +3114,14 @@ public:
                                 if (loop != 1 && (!loop || --loop)) {
                                         auto cb = event_cb.lock();
                                         if (cb) {
-                                            cb->on_stream_restart();
+                                            cb->on_player_restart();
                                         }
                                         stream_seek(is, start_time != AV_NOPTS_VALUE ? start_time : 0, 0, 0);
                                 }
                                 else if (autoexit) {
                                         auto cb = event_cb.lock();
                                         if (cb) {
-                                            cb->on_auto_exit();
+                                            cb->on_player_auto_exit();
                                         }
                                         ret = AVERROR_EOF;
                                         goto fail;
@@ -3137,7 +3152,7 @@ public:
                                         auto cb = event_cb.lock();
                                         if (cb) {
                                             cb->on_stream_error("av_read_frame failed");
-                                            cb->on_auto_exit();
+                                            cb->on_player_auto_exit();
                                         }
                                         goto fail;
                                     }
@@ -3192,6 +3207,8 @@ public:
                         cb->on_stream_error("failed to prepare media");
                     }
                 }
+
+                stream_ready = false;
                 return 0;
         }
 
@@ -3735,7 +3752,7 @@ public:
         }
 
         bool is_stream_ready() override {
-            return stream_ready.load() && video_state;
+            return stream_ready.load();
         }
 
         void request_seek_file(double percent) override {

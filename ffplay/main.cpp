@@ -15,17 +15,27 @@ public:
         printf("%s \n", __FUNCTION__);
     }
 
+    virtual void on_player_paused()
+    {
+        printf("%s \n", __FUNCTION__);
+    }
+    
+    virtual void on_player_resumed()
+    {
+        printf("%s \n", __FUNCTION__);
+    }
+
     virtual void on_stream_eof()
     {
         printf("%s \n", __FUNCTION__);
     }
 
-    virtual void on_stream_restart()
+    virtual void on_player_restart()
     {
         printf("%s \n", __FUNCTION__);
     }
 
-    virtual void on_auto_exit()
+    virtual void on_player_auto_exit()
     {
         printf("%s \n", __FUNCTION__);
     }

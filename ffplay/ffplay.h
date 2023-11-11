@@ -67,13 +67,16 @@ public:
     virtual void on_stream_ready(bool include_audio, bool include_video, double duration_seconds) {}
     virtual void on_stream_error(const std::string& error) {}
 
+    virtual void on_player_paused() {}
+    virtual void on_player_resumed() {}
+
     // pts_seconds : in seconds
     virtual void on_video_frame(std::shared_ptr<AVFrame> frame, double pts_seconds) {}
-    virtual void on_audio_frame(std::shared_ptr<AVFrame> frame, double pts_seconds) {} // TODO
+    virtual void on_audio_frame(std::shared_ptr<AVFrame> frame, double pts_seconds) {}
 
-    virtual void on_stream_restart() {} // retart play since your loop settings
+    virtual void on_player_restart() {} // retart play since your loop settings
     virtual void on_stream_eof() {} // player stay on eof, and you can seek
-    virtual void on_auto_exit() {} // player exit and you should no longer use it
+    virtual void on_player_auto_exit() {} // player exit and you should no longer use it
 };
 
 class ffplayer_interface
