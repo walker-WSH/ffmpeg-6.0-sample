@@ -1,0 +1,44 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8004: Output 目录未以斜杠结尾。  此生成实例将添加斜杠，因为必须有这个斜杠才能正确计算 Output 目录。
+  cmdutils.c
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\include\libavutil\rational.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\fftools\cmdutils.c(81,21): warning C4133: “函数”: 从“char [1]”到“LPCWSTR”的类型不兼容
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\fftools\cmdutils.c(287,23): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\fftools\cmdutils.c(289,88): warning C4305: “函数”: 从“__int64”到“double”截断
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\fftools\cmdutils.c(289,27): warning C4244: “=”: 从“double”转换到“int64_t”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\fftools\cmdutils.c(293,25): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\fftools\cmdutils.c(966,19): warning C4018: “<”: 有符号/无符号不匹配
+  ffplay.c
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\config.h(606,1): warning C4005: “CONFIG_AVFILTER”: 宏重定义
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(28,1): message : 参见“CONFIG_AVFILTER”的前一个定义
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\include\libavutil\rational.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(881,29): warning C4244: “=”: 从“int64_t”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(882,28): warning C4244: “=”: 从“int64_t”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(999,55): warning C4018: “<”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1091,66): warning C4244: “-=”: 从“int64_t”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1182,74): warning C4244: “=”: 从“double”转换到“FFTSample”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1196,49): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1197,76): warning C4244: “初始化”: 从“double”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1218,46): warning C4018: “>=”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1676,71): warning C4018: “<”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1859,23): warning C4018: “<”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(1882,23): warning C4018: “<”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(2486,41): warning C4018: “>=”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(2612,46): warning C4018: “>=”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(2899,23): warning C4018: “<”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3285,44): warning C4244: “函数”: 从“int64_t”转换到“unsigned int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3302,23): warning C4018: “<”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3312,15): warning C4018: “>=”: 有符号/无符号不匹配
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3295,44): warning C4244: “初始化”: 从“double”转换到“int64_t”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3418,55): warning C4244: “=”: 从“int64_t”转换到“double”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3420,55): warning C4244: “=”: 从“int64_t”转换到“double”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3422,55): warning C4244: “=”: 从“int64_t”转换到“double”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3428,65): warning C4244: “函数”: 从“double”转换到“int64_t”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3428,70): warning C4244: “函数”: 从“double”转换到“int64_t”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3478,66): warning C4244: “函数”: 从“double”转换到“int64_t”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3484,64): warning C4244: “=”: 从“__int64”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3489,43): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3496,43): warning C4244: “=”: 从“double”转换到“int64_t”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3527,24): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+C:\Users\wsh\Desktop\ffmpeg-6.0-sample\ffplay\ffplay.c(3533,25): warning C4244: “=”: 从“double”转换到“int”，可能丢失数据
+  正在生成代码...
+  ffplay.vcxproj -> C:\Users\wsh\Desktop\ffmpeg-6.0-sample\bin\ffplay.exe
