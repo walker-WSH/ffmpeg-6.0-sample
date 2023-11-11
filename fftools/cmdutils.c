@@ -65,16 +65,14 @@ const OptionDef* find_option(const OptionDef* po, const char* name)
         return po;
 }
 
-void print_error(const char* filename, int err)
-{
-        av_log(NULL, AV_LOG_ERROR, "%s: %s\n", filename, av_err2str(err));
-}
-
 int check_stream_specifier(AVFormatContext* s, AVStream* st, const char* spec)
 {
         int ret = avformat_match_stream_specifier(s, st, spec);
         if (ret < 0)
-                av_log(s, AV_LOG_ERROR, "Invalid stream specifier: %s.\n", spec);
+        {
+            assert(0);
+            //av_log(s, AV_LOG_ERROR, "Invalid stream specifier: %s.\n", spec);
+        }
         return ret;
 }
 
@@ -163,11 +161,15 @@ double get_rotation(int32_t* displaymatrix)
 
         theta -= 360 * floor(theta / 360 + 0.9 / 360);
 
-        if (fabs(theta - 90 * round(theta / 90)) > 2)
-                av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
-                        "If you want to help, upload a sample "
-                        "of this file to https://streams.videolan.org/upload/ "
-                        "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+        if (fabs(theta - 90 * round(theta / 90)) > 2) {
+            assert(0);
+            /*
+            av_log(NULL, AV_LOG_WARNING, "Odd rotation angle.\n"
+                "If you want to help, upload a sample "
+                "of this file to https://streams.videolan.org/upload/ "
+                "and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)");
+            */
+        }
 
         return theta;
 }

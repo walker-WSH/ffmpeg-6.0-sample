@@ -56,6 +56,7 @@ extern "C" {
 #include "libavutil/opt.h"
 #include "libavcodec/avfft.h"
 #include "libswresample/swresample.h"
+#include "libavutil/error.h"
 
 #if CONFIG_AVFILTER
 #include "libavfilter/avfilter.h"
@@ -343,11 +344,9 @@ const struct TextureFormatEntry {
 class ffplayer : public ffplayer_interface {
 public:
     explicit ffplayer(std::weak_ptr<ffplayer_event> cb) : event_cb(cb) {
-        av_log(NULL, AV_LOG_DEBUG, "%s \n", __FUNCTION__);
     }
 
     virtual ~ffplayer() {
-        av_log(NULL, AV_LOG_DEBUG, "%s \n", __FUNCTION__);
         assert(abort_play && event_loop_tid == nullptr);
         do_exit();
     }
@@ -886,7 +885,7 @@ public:
                                 memset(pixels, 0, pitch * new_height);
                                 SDL_UnlockTexture(*texture);
                         }
-                        av_log(NULL, AV_LOG_VERBOSE, "Created %dx%d texture with %s.\n", new_width, new_height, SDL_GetPixelFormatName(new_format));
+                        av_log(NULL, AV_LOG_DEBUG, "Created %dx%d texture with %s.\n", new_width, new_height, SDL_GetPixelFormatName(new_format));
                 }
                 return 0;
         }
@@ -1653,7 +1652,7 @@ public:
                         }
                 }
 
-                av_log(NULL, AV_LOG_TRACE, "video: delay=%0.3f A-V=%f\n",
+                av_log(NULL, AV_LOG_DEBUG, "video: delay=%0.3f A-V=%f\n",
                         delay, -diff);
 
                 return delay;
@@ -2391,7 +2390,7 @@ public:
                                                 max_nb_samples = ((nb_samples * (100 + SAMPLE_CORRECTION_PERCENT_MAX) / 100));
                                                 wanted_nb_samples = av_clip(wanted_nb_samples, min_nb_samples, max_nb_samples);
                                         }
-                                        av_log(NULL, AV_LOG_TRACE, "diff=%f adiff=%f sample_diff=%d apts=%0.3f %f\n",
+                                        av_log(NULL, AV_LOG_DEBUG, "diff=%f adiff=%f sample_diff=%d apts=%0.3f %f\n",
                                                 diff, avg_diff, wanted_nb_samples - nb_samples,
                                                 is->audio_clock, is->audio_diff_threshold);
                                 }
@@ -2887,7 +2886,8 @@ public:
                 }
                 err = avformat_open_input(&ic, is->filename, is->iformat, &format_opts);
                 if (err < 0) {
-                        print_error(is->filename, err);
+                        av_log(NULL, AV_LOG_ERROR, "avformat_open_input failed: %s\n", get_ffmpeg_error(err).c_str());
+                        assert(false);
                         ret = -1;
                         goto fail;
                 }
@@ -3422,7 +3422,7 @@ public:
                 if (i >= is->ic->nb_chapters)
                         return;
 
-                av_log(NULL, AV_LOG_VERBOSE, "Seeking to chapter %d.\n", i);
+                av_log(NULL, AV_LOG_DEBUG, "Seeking to chapter %d.\n", i);
                 stream_seek(is, av_rescale_q(is->ic->chapters[i]->start, is->ic->chapters[i]->time_base,
                         temp), 0, 0);
         }
@@ -3707,7 +3707,7 @@ public:
                                 }
                                 if (renderer) {
                                         if (!SDL_GetRendererInfo(renderer, &renderer_info))
-                                                av_log(NULL, AV_LOG_VERBOSE, "Initialized %s renderer.\n", renderer_info.name);
+                                                av_log(NULL, AV_LOG_DEBUG, "Initialized %s renderer.\n", renderer_info.name);
                                 }
                         }
                         if (!window || !renderer || !renderer_info.num_texture_formats) {
@@ -3806,6 +3806,13 @@ public:
                 }
         }
 
+ private:
+     std::string get_ffmpeg_error(int err)
+     {
+         char errbuf[AV_ERROR_MAX_STRING_SIZE] = { 0 };
+         av_strerror(err, errbuf, AV_ERROR_MAX_STRING_SIZE);
+         return errbuf;
+     }
 }; // class ffplayer
 
 int ffplayer::s_event_loop(void* arg) {
