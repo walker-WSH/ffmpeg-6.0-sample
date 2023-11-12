@@ -19,6 +19,9 @@
     <ClCompile Include="TaskInstance.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\fftools\cmdutils.h">
@@ -28,6 +31,9 @@
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="TaskInstance.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="auto_run.hpp">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>

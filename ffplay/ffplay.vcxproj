@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\fftools\cmdutils.h" />
+    <ClInclude Include="auto_run.hpp" />
     <ClInclude Include="ffplay.h" />
     <ClInclude Include="TaskInstance.h" />
   </ItemGroup>

@@ -9,6 +9,7 @@ extern "C" {
 #endif
 #include "libavutil/avutil.h"
 #include "libavutil/frame.h"
+#include "libavutil/log.h"
 #if defined(__cplusplus)
 };
 #endif
@@ -16,6 +17,8 @@ extern "C" {
 #ifdef _DEBUG
 //#define DEBUG_SYNC
 #endif
+
+static const auto min_hw_image_size = 1920 * 1080;
 
 enum {
     AV_SYNC_AUDIO_MASTER, /* default choice */
@@ -56,6 +59,21 @@ struct ffplay_parameters
 
     int framedrop = -1; // "drop frames when cpu is too slow"
     int infinite_buffer = -1; // don't limit the input buffer size (useful with realtime streams)
+
+    bool hw_decode = false; // it will be ignored if min_hw_image_size is not matched
+};
+
+struct ffplay_file_info
+{
+    bool hw_decode_used = false;
+
+    double duration_seconds = 0.0;
+
+    bool include_audio = false;
+    bool include_video = false;
+
+    int width = 0;
+    int height = 0;
 };
 
 class ffplayer_event
@@ -63,8 +81,19 @@ class ffplayer_event
 public:
     virtual ~ffplayer_event() = default;
 
+    /*
+    player: just to let you know which player this log is from, you should not call its interface
+    level: defined by ffmpeg
+         AV_LOG_PANIC:
+         AV_LOG_FATAL:
+         AV_LOG_ERROR:
+         AV_LOG_WARNING:
+         AV_LOG_INFO:
+    */
+    virtual void on_player_log(void* player, int level, const char* text) {}
+
     // duration_seconds : in seconds
-    virtual void on_stream_ready(bool include_audio, bool include_video, double duration_seconds) {}
+    virtual void on_stream_ready(const ffplay_file_info& info) {}
     virtual void on_stream_error(const std::string& error) {}
 
     virtual void on_player_paused() {}
@@ -105,7 +134,7 @@ std::shared_ptr<ffplayer_interface> create_ffplayer(std::weak_ptr<ffplayer_event
 
 /*
 TODO:
-》不支持视频硬件解码
+》hw: dx11 use hw surface directly
 》audio: 设置支持的audio format
 》audio: 应删除SDL audio/video的初始化，删除SDL Audio后，需要自己负责定时回调sdl_audio_callback取数据.注意：电脑没扬声器设备时 SDL_OpenAudioDevice会卡住
 */
