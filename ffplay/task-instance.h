@@ -4,10 +4,10 @@
 #include <mutex>
 #include <vector>
 
-class TaskInstance {
+class task_instance {
 public:
-	TaskInstance() = default;
-	virtual ~TaskInstance() { ClearAllTask(); }
+	task_instance() = default;
+	virtual ~task_instance() { ClearAllTask(); }
 
 	void PushAsyncTask(std::function<void()> func, uint64_t key = 0);
 	bool TaskEmpty();

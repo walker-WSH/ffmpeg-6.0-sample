@@ -14,13 +14,13 @@
     <ClCompile Include="..\fftools\cmdutils.c" />
     <ClCompile Include="ffplay.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="TaskInstance.cpp" />
+    <ClCompile Include="task-instance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\fftools\cmdutils.h" />
-    <ClInclude Include="auto_run.hpp" />
+    <ClInclude Include="auto-run.hpp" />
     <ClInclude Include="ffplay.h" />
-    <ClInclude Include="TaskInstance.h" />
+    <ClInclude Include="task-instance.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

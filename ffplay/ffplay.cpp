@@ -34,8 +34,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "auto_run.hpp"
-
 #include <SDL.h>
 #include <SDL_thread.h>
 
@@ -74,7 +72,9 @@ extern "C" {
 #endif
 
 #include "ffplay.h"
-#include "TaskInstance.h"
+#include "task-instance.h"
+#include "auto-run.hpp"
+
 
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4018)
@@ -384,7 +384,7 @@ private:
         bool abort_play = false;
         SDL_Thread* event_loop_tid = nullptr;
 
-        TaskInstance task_pool;
+        task_instance task_pool;
 
         AVDictionary* sws_dict = NULL;
         AVDictionary* swr_opts = NULL;
@@ -4013,7 +4013,7 @@ bool global_init() {
 #endif
     avformat_network_init();
 
-    auto  flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
+    auto flags = SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER;
     if (SDL_Init(flags)) {
         return false;
     }

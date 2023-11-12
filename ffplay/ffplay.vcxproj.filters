@@ -16,10 +16,10 @@
     <ClCompile Include="ffplay.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="TaskInstance.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="task-instance.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -30,10 +30,10 @@
     <ClInclude Include="ffplay.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="TaskInstance.h">
+    <ClInclude Include="task-instance.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="auto_run.hpp">
+    <ClInclude Include="auto-run.hpp">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
