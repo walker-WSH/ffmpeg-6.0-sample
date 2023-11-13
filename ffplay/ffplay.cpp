@@ -197,10 +197,6 @@ enum ShowMode {
 };
 
 typedef struct Decoder {
-        // for hw by walker-WSH
-        AVBufferRef* hw_device_ctx = nullptr; // free it with avctx
-        enum AVPixelFormat hw_format = AVPixelFormat::AV_PIX_FMT_NONE;
-
         AVPacket* pkt;
         PacketQueue* queue;
         AVCodecContext* avctx;
@@ -373,6 +369,8 @@ private:
         // for hw by walker-WSH
         bool request_hw_decode = false;
         bool hw_decode_used = false;
+        AVBufferRef* hw_device_buf = nullptr;
+        enum AVPixelFormat hw_format = AVPixelFormat::AV_PIX_FMT_NONE;
 
         // added by walker-WSH
         std::atomic<bool> stream_ready = false;
@@ -722,10 +720,6 @@ public:
         void decoder_destroy(Decoder* d) {
                 av_packet_free(&d->pkt);
                 avcodec_free_context(&d->avctx);
-
-                // for hw by walker-WSH
-                av_buffer_unref(&d->hw_device_ctx);
-
         }
 
         void frame_queue_unref_item(Frame* vp)
@@ -1297,6 +1291,9 @@ public:
                 case AVMEDIA_TYPE_VIDEO:
                         decoder_abort(&is->viddec, &is->pictq);
                         decoder_destroy(&is->viddec);
+
+                        // for hw by walker-WSH
+                        av_buffer_unref(&hw_device_buf);
                         break;
                 case AVMEDIA_TYPE_SUBTITLE:
                         decoder_abort(&is->subdec, &is->subpq);
@@ -2269,12 +2266,17 @@ public:
 
                         if (hw_decode_used)
                         {
-                            auto err = av_hwframe_transfer_data(sw_frame, hw_frame, 0);
-                            if (err != 0) {
-                                continue;
-                            }
+                            if (hw_frame->format == hw_format) {
+                                auto err = av_hwframe_transfer_data(sw_frame, hw_frame, 0);
+                                if (err != 0) {
+                                    continue;
+                                }
 
-                            av_frame_copy_props(sw_frame, hw_frame);
+                                av_frame_copy_props(sw_frame, hw_frame);
+                            }
+                            else {
+                                frame = hw_frame;
+                            }
                         }
                         // for hw by walker-WSH ------------------------- end
 
@@ -2715,10 +2717,11 @@ public:
             };
 
             enum AVHWDeviceType* priority = hw_priority;
+            enum AVPixelFormat temp_format = AVPixelFormat::AV_PIX_FMT_NONE;
             AVBufferRef* hw_ctx = NULL;
             
             while (*priority != AV_HWDEVICE_TYPE_NONE) {
-                if (has_hw_type(codec, *priority, &d->hw_format)) {
+                if (has_hw_type(codec, *priority, &temp_format)) {
                     int ret = av_hwdevice_ctx_create(&hw_ctx, *priority, NULL, NULL, 0);
                     if (ret == 0)
                         break;
@@ -2730,6 +2733,7 @@ public:
             if (hw_ctx) {
                 // this ref will be decreased by ffmpeg
                 c->hw_device_ctx = av_buffer_ref(hw_ctx);
+                hw_format = temp_format;
             }
 
             return hw_ctx;
@@ -2884,7 +2888,7 @@ public:
                         is->queue_attachments_req = 1;
 
                         // for hw by walker-WSH
-                        is->viddec.hw_device_ctx = temp_hw_device_ctx;
+                        hw_device_buf = temp_hw_device_ctx;
                         hw_decode_used = !!temp_hw_device_ctx;
                         temp_hw_device_ctx = nullptr;
 
