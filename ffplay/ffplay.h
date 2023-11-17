@@ -21,12 +21,6 @@ extern "C" {
 static const auto min_hw_image_size = 1920 * 1080;
 
 enum {
-    AV_SYNC_AUDIO_MASTER, /* default choice */
-    AV_SYNC_VIDEO_MASTER,
-    AV_SYNC_EXTERNAL_CLOCK, /* synchronize to an external clock */
-};
-
-enum {
     FFPLAY_ERROR_OK = 0,
     FFPLAY_ERROR_INVALID_PARAM,
     FFPLAY_ERROR_OPEN_FAILED,
@@ -48,8 +42,6 @@ struct ffplay_parameters
     bool disable_video = false;
     bool disable_audio = false;
     bool disable_subtitle = true; // disable subtitle
-
-    int av_sync_type = AV_SYNC_AUDIO_MASTER;
 
     int loop = 1; // 0 means loop forever
     bool auto_exit_when_eof = false; // it will be ignore if loop is 0
@@ -74,6 +66,14 @@ struct ffplay_file_info
 
     int width = 0;
     int height = 0;
+};
+
+struct AudioParams {
+    int freq;
+    AVChannelLayout ch_layout;
+    enum AVSampleFormat fmt;
+    int frame_size;
+    int bytes_per_sec;
 };
 
 class ffplayer_event
@@ -101,7 +101,7 @@ public:
 
     // pts_seconds : in seconds
     virtual void on_video_frame(std::shared_ptr<AVFrame> frame, double pts_seconds) {}
-    virtual void on_audio_frame(std::shared_ptr<AVFrame> frame, double pts_seconds) {}
+    virtual void on_audio_frame(std::shared_ptr<uint8_t> data, const AudioParams& params, int samples_per_chn, double pts_seconds) {}
 
     virtual void on_player_restart() {} // retart play since your loop settings
     virtual void on_stream_eof() {} // player stay on eof, and you can seek
@@ -131,10 +131,3 @@ public:
 bool global_init();
 void global_uninit();
 std::shared_ptr<ffplayer_interface> create_ffplayer(std::weak_ptr<ffplayer_event> cb);
-
-/*
-TODO:
-》hw: dx11 use hw surface directly
-》audio: 设置支持的audio format
-》audio: 应删除SDL audio/video的初始化，删除SDL Audio后，需要自己负责定时回调sdl_audio_callback取数据.注意：电脑没扬声器设备时 SDL_OpenAudioDevice会卡住
-*/

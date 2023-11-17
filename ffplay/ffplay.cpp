@@ -145,6 +145,7 @@ typedef struct PacketQueue {
 #define SAMPLE_QUEUE_SIZE 9
 #define FRAME_QUEUE_SIZE FFMAX(SAMPLE_QUEUE_SIZE, FFMAX(VIDEO_PICTURE_QUEUE_SIZE, SUBPICTURE_QUEUE_SIZE))
 
+/*
 typedef struct AudioParams {
         int freq;
         AVChannelLayout ch_layout;
@@ -152,6 +153,7 @@ typedef struct AudioParams {
         int frame_size;
         int bytes_per_sec;
 } AudioParams;
+*/
 
 typedef struct Clock {
         double pts;           /* clock base */
@@ -194,6 +196,12 @@ typedef struct FrameQueue {
 
 enum ShowMode {
         SHOW_MODE_NONE = -1, SHOW_MODE_VIDEO = 0, SHOW_MODE_WAVES, SHOW_MODE_RDFT, SHOW_MODE_NB
+};
+
+enum {
+    AV_SYNC_AUDIO_MASTER, /* default choice */
+    AV_SYNC_VIDEO_MASTER,
+    AV_SYNC_EXTERNAL_CLOCK, /* synchronize to an external clock */
 };
 
 typedef struct Decoder {
@@ -371,6 +379,9 @@ private:
         bool hw_decode_used = false;
         AVBufferRef* hw_device_buf = nullptr;
         enum AVPixelFormat hw_format = AVPixelFormat::AV_PIX_FMT_NONE;
+
+        // for send audio by walker-WSH
+        std::thread pop_audio_handle;
 
         // added by walker-WSH
         std::atomic<bool> stream_ready = false;
@@ -1028,7 +1039,7 @@ public:
 #if defined(DEBUG_SYNC)
                     // pts : 此处已经是经timebase转换过的时间戳，单位s
                     // src_frame: 此处已经是经过同步的视频帧 应该尽快推送渲染
-                    av_log_ffplay(NULL, AV_LOG_DEBUG, "pop video, pts=%0.3f type:%c format:%d \n", vp->pts, av_get_picture_type_char(vp->frame->pict_type), vp->frame->format);
+                    av_log_ffplay(NULL, AV_LOG_INFO, "--- pop video, pts=%0.3f type:%c format:%d \n", vp->pts, av_get_picture_type_char(vp->frame->pict_type), vp->frame->format);
 #endif
                 }
 
@@ -1274,7 +1285,16 @@ public:
                 switch (codecpar->codec_type) {
                 case AVMEDIA_TYPE_AUDIO:
                         decoder_abort(&is->auddec, &is->sampq);
-                        SDL_CloseAudioDevice(audio_dev);
+
+                        // for send audio by walker-WSH
+                        if (pop_audio_handle.joinable()) {
+                            pop_audio_handle.join();
+                        }
+                        if (audio_dev != 0) {
+                            SDL_CloseAudioDevice(audio_dev);
+                            audio_dev = 0;
+                        }
+                        
                         decoder_destroy(&is->auddec);
                         swr_free(&is->swr_ctx);
                         av_freep(&is->audio_buf1);
@@ -1442,7 +1462,7 @@ public:
 #if defined(DEBUG_SYNC)
                 // pts : 此处已经是经timebase转换过的时间戳，单位s
                 // src_frame: 此处已经是经过同步的视频帧 应该尽快推送渲染
-                av_log_ffplay(NULL, AV_LOG_DEBUG, "pop video to upper, pts=%0.3f type:%c format:%d \n", vp->pts, av_get_picture_type_char(vp->frame->pict_type), vp->frame->format);
+                av_log_ffplay(NULL, AV_LOG_INFO, "---- pop video to upper, pts=%0.3f type:%c format:%d \n", vp->pts, av_get_picture_type_char(vp->frame->pict_type), vp->frame->format);
 #endif
                 auto cb = event_cb.lock();
                 if (cb) {
@@ -1819,11 +1839,6 @@ public:
         {
                 Frame* vp;
 
-#if defined(DEBUG_SYNC)
-                // pts : 此处已经是经timebase转换过的时间戳，单位s
-                // src_frame: 此处只是初步同步 还没真正同步
-#endif
-
                 if (!(vp = frame_queue_peek_writable(&is->pictq)))
                         return -1;
 
@@ -2179,12 +2194,6 @@ public:
                                         af->serial = is->auddec.pkt_serial;
                                         af->duration = av_q2d(AVRational(frame->nb_samples, frame->sample_rate));
 
-#if defined(DEBUG_SYNC)
-                                        // af->pts : 此处已经是经timebase转换过的时间戳，单位s
-                                        // frame: 此处的frame并没有和视频同步，要在取数据的地方才真正同步了
-                                        // 真正同步取出audio的地方 是函数audio_decode_frame::synchronize_audio之后的位置
-#endif
-
                                         av_frame_move_ref(af->frame, frame);
                                         frame_queue_push(&is->sampq);
 
@@ -2489,12 +2498,6 @@ public:
 
                 wanted_nb_samples = synchronize_audio(is, af->frame->nb_samples);
 
-#if defined(DEBUG_SYNC)
-                // af->pts : 此处已经是经timebase转换过的时间戳，单位s
-                // frame: 此处已经是经过同步的帧 应该尽快推送渲染
-                av_log_ffplay(NULL, AV_LOG_DEBUG, "pop audio frame   pts=%0.3f\n", af->pts);
-#endif
-
                 if (af->frame->format != is->audio_src.fmt ||
                         av_channel_layout_compare(&af->frame->ch_layout, &is->audio_src.ch_layout) ||
                         af->frame->sample_rate != is->audio_src.freq ||
@@ -2562,8 +2565,165 @@ public:
                         is->audio_clock = af->pts + (double)af->frame->nb_samples / af->frame->sample_rate;
                 else
                         is->audio_clock = NAN;
+
+                // for send audio by walker-WSH
+                if (!isnan(af->pts)) {
+                    frame_pts_begin = pts_pos = af->pts;
+                    frame_pts_end = is->audio_clock;
+                }
+                else {
+                    frame_pts_begin = pts_pos = frame_pts_end = NAN;
+                }
+
                 is->audio_clock_serial = af->serial;
                 return resampled_data_size;
+        }
+
+        // for send audio by walker-WSH
+        double frame_pts_begin = NAN;
+        double frame_pts_end = NAN;
+        double pts_pos = NAN;
+
+        // for send audio by walker-WSH
+        void pop_audio_thread(VideoState* is)
+        {
+            auto start_systime = av_gettime_relative();
+            int64_t next_system = 0;
+            double start_data = NAN;
+
+            double pre_pts = NAN;
+            double expect_next_pts = NAN;
+            const double ts_jumped = 0.1; // 100ms
+            
+            std::shared_ptr<uint8_t> buffer = nullptr;
+            const int buffer_size = is->audio_hw_buf_size;
+
+            const auto one_ms = 1000.0;
+
+            while (!is->abort_request && !abort_play) {
+                if (!buffer) {
+                    buffer = std::shared_ptr<uint8_t>(new uint8_t[buffer_size]);
+                }
+
+                if (is->paused) {
+                    pre_pts = expect_next_pts = NAN;
+                    av_usleep(10 * one_ms);
+                    continue;
+                }
+
+                auto crt_systime = av_gettime_relative();
+                if (crt_systime < next_system)
+                {
+                    auto sleep_us = next_system - crt_systime;
+                    if (sleep_us > 100.0 * one_ms)
+                        sleep_us = 100.0 * one_ms;
+
+                    if (sleep_us >= 5 * one_ms)
+                        av_usleep(sleep_us);
+                }
+
+                double crt_pts = NAN;
+                int got_bytes = 0;
+                auto data_got = pop_audio_callback(is, buffer.get(), buffer_size, crt_pts, got_bytes);
+                if (!data_got) {
+                    av_usleep(10 * one_ms);
+                    continue;
+                }
+
+                auto cb = event_cb.lock();
+                if (!cb)
+                    break;
+
+#if defined(DEBUG_SYNC)
+                av_log_ffplay(NULL, AV_LOG_INFO, "----- pop audio to upper, % lf \n", crt_pts);
+#endif
+
+                int samples_per_chn = got_bytes / is->audio_tgt.frame_size;
+                cb->on_audio_frame(buffer, is->audio_tgt, samples_per_chn, crt_pts);
+                buffer.reset();
+
+                if (isnan(pre_pts) || isnan(crt_pts) || crt_pts <= pre_pts || fabs(expect_next_pts - crt_pts) >= ts_jumped) {
+                    av_log_ffplay(NULL, AV_LOG_INFO, "audio ts jumped %lf(ms), near-expected %lf(ms) \n", 
+                        (crt_pts - pre_pts) * 1000.0, 
+                        (expect_next_pts - crt_pts) * 1000.0);
+
+                    start_data = crt_pts;
+                    start_systime = av_gettime_relative();
+                }
+
+                auto one_seconds = 1000000.0;
+                auto data_duration_s = double(samples_per_chn) / double(is->audio_tgt.freq);
+                auto data_duration_us = data_duration_s * one_seconds;
+                auto total_duration = (crt_pts - start_data) * one_seconds + data_duration_us;
+                next_system = start_systime + total_duration;
+
+                pre_pts = crt_pts;
+                expect_next_pts = crt_pts + data_duration_s;
+            }
+        }
+
+        // for send audio by walker-WSH
+        bool pop_audio_callback(VideoState* is, Uint8* stream, int len, double &ret_pts, int &got_bytes)
+        {
+            got_bytes = 0;
+            ret_pts = NAN;
+            bool data_got = false;
+
+            int audio_size, len1;
+   
+            audio_callback_time = av_gettime_relative();
+
+            while (len > 0) {
+                if (is->audio_buf_index >= is->audio_buf_size) {
+                    audio_size = audio_decode_frame(is);
+                    if (audio_size < 0) {
+                        /* if error, just output silence */
+                        is->audio_buf = NULL;
+                        is->audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is->audio_tgt.frame_size * is->audio_tgt.frame_size;
+                    }
+                    else {
+                        if (is->show_mode != SHOW_MODE_VIDEO)
+                            update_sample_display(is, (int16_t*)is->audio_buf, audio_size);
+                        is->audio_buf_size = audio_size;
+                    }
+                    is->audio_buf_index = 0;
+                }
+
+                len1 = is->audio_buf_size - is->audio_buf_index;
+                if (len1 > len)
+                    len1 = len;
+
+                if (is->audio_buf) {
+                    data_got = true;
+                    got_bytes += len1;
+                    memcpy(stream, (uint8_t*)is->audio_buf + is->audio_buf_index, len1);
+                }
+                else {
+                    memset(stream, 0, len1);
+                }
+
+                len -= len1;
+                stream += len1;
+                is->audio_buf_index += len1;
+
+                if (isnan(ret_pts)) {
+                    ret_pts = pts_pos;
+                }
+                if (!isnan(pts_pos))
+                {
+                    auto samples_per_chn = len1 / is->audio_tgt.frame_size;
+                    pts_pos += double(samples_per_chn) / double(is->audio_tgt.freq);
+                }
+            }
+
+            is->audio_write_buf_size = is->audio_buf_size - is->audio_buf_index;
+            /* Let's assume the audio driver that is used by SDL has two periods. */
+            if (!isnan(is->audio_clock)) {
+                set_clock_at(&is->audclk, is->audio_clock - (double)(2 * is->audio_hw_buf_size + is->audio_write_buf_size) / is->audio_tgt.bytes_per_sec, is->audio_clock_serial, audio_callback_time / 1000000.0);
+                sync_clock_to_slave(&is->extclk, &is->audclk);
+            }
+
+            return data_got;
         }
 
         /* prepare a new audio buffer */
@@ -2644,21 +2804,32 @@ public:
                 wanted_spec.samples = FFMAX(SDL_AUDIO_MIN_BUFFER_SIZE, 2 << av_log2(wanted_spec.freq / SDL_AUDIO_MAX_CALLBACKS_PER_SEC));
                 wanted_spec.callback = s_sdl_audio_callback;
                 wanted_spec.userdata = this;
-                while (!(audio_dev = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &spec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE))) {
+
+                // for send audio by walker-WSH
+                if (display_disable) {
+                    spec = wanted_spec;
+
+                    spec.channels = 2;
+                    spec.size = wanted_spec.samples * spec.channels * 2; // 2 : sizeof AUDIO_S16SYS
+                }
+                else {
+                    while (!(audio_dev = SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &spec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE))) {
                         av_log_ffplay(NULL, AV_LOG_WARNING, "SDL_OpenAudio (%d channels, %d Hz): %s\n",
-                                wanted_spec.channels, wanted_spec.freq, SDL_GetError());
+                            wanted_spec.channels, wanted_spec.freq, SDL_GetError());
                         wanted_spec.channels = next_nb_channels[FFMIN(7, wanted_spec.channels)];
                         if (!wanted_spec.channels) {
-                                wanted_spec.freq = next_sample_rates[next_sample_rate_idx--];
-                                wanted_spec.channels = wanted_nb_channels;
-                                if (!wanted_spec.freq) {
-                                        av_log_ffplay(NULL, AV_LOG_ERROR,
-                                                "No more combinations to try, audio open failed\n");
-                                        return -1;
-                                }
+                            wanted_spec.freq = next_sample_rates[next_sample_rate_idx--];
+                            wanted_spec.channels = wanted_nb_channels;
+                            if (!wanted_spec.freq) {
+                                av_log_ffplay(NULL, AV_LOG_ERROR,
+                                    "No more combinations to try, audio open failed\n");
+                                return -1;
+                            }
                         }
                         av_channel_layout_default(wanted_channel_layout, wanted_spec.channels);
+                    }
                 }
+
                 if (spec.format != AUDIO_S16SYS) {
                         av_log_ffplay(NULL, AV_LOG_ERROR,
                                 "SDL advised audio format %d is not supported!\n", spec.format);
@@ -2875,7 +3046,16 @@ public:
                         }
                         if ((ret = decoder_start(&is->auddec, s_audio_thread, "audio_decoder", this)) < 0)
                                 goto out;
-                        SDL_PauseAudioDevice(audio_dev, 0);
+
+                        // for send audio by walker-WSH
+                        if (display_disable) 
+                        {
+                            pop_audio_handle = std::thread(&ffplayer::pop_audio_thread, this, is);
+                        }
+                        else {
+                            SDL_PauseAudioDevice(audio_dev, 0);
+                        }
+                        
                         break;
                 case AVMEDIA_TYPE_VIDEO:
                         is->video_stream = stream_index;
@@ -2910,6 +3090,13 @@ public:
 
             fail:
                 avcodec_free_context(&avctx);
+
+                // for send audio by walker-WSH
+                if (audio_dev != 0) {
+                    SDL_CloseAudioDevice(audio_dev);
+                    audio_dev = 0;
+                }
+
             out:
                 // for hw by walker-WSH
                 av_buffer_unref(&temp_hw_device_ctx);
@@ -3802,9 +3989,10 @@ public:
                         vfilters_list = parameters.video_filter;
                 }
 
+                av_sync_type = AV_SYNC_AUDIO_MASTER;
+
                 start_time = parameters.start_time;
                 duration = parameters.duration;
-                av_sync_type = parameters.av_sync_type;
                 autoexit = parameters.auto_exit_when_eof ? 1 : 0;
                 loop = parameters.loop;
                 autorotate = parameters.auto_rotate ? 1 : 0;
