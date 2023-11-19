@@ -37,25 +37,29 @@ void my_ffplayer_event::on_player_log(void* player, int level, const char* text)
 void my_ffplayer_event::on_stream_ready(const ffplay_file_info& info)
 {
 	g_fileinfo = info;
-	printf("%s audio:%d video:%d duration:%lf hw:%d %dx%d \n", __FUNCTION__,
+	_cprintf("%s audio:%d video:%d duration:%lf hw:%d %dx%d \n", __FUNCTION__,
 		info.include_audio, info.include_video, info.duration_seconds, info.hw_decode_used,
 		info.width, info.height);
 }
 
 void my_ffplayer_event::on_video_frame(std::shared_ptr<AVFrame> frame, double pts_seconds) {
-	play_pts = pts_seconds;
+	if (!isnan(pts_seconds))
+		play_pts = pts_seconds;
 }
 
 void my_ffplayer_event::on_audio_frame(std::shared_ptr<uint8_t> data, const AudioParams& params, int samples_per_chn, double pts_seconds) {
-	play_pts = pts_seconds;
+	if (!isnan(pts_seconds))
+		play_pts = pts_seconds;
 }
 
 void my_ffplayer_event::on_player_paused() {
-	paused = true;
+	paused = true; 
+	_cprintf("%s \n", __FUNCTION__);
 }
 
 void my_ffplayer_event::on_player_resumed() {
 	paused = false;
+	_cprintf("%s \n", __FUNCTION__);
 }
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -110,6 +114,7 @@ void ClibplayerdemoDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_SLIDER_PROGRESS, m_slider);
+	DDX_Control(pDX, IDC_SLIDER_SEEK, m_sliderSeek);
 }
 
 BEGIN_MESSAGE_MAP(ClibplayerdemoDlg, CDialogEx)
@@ -120,9 +125,8 @@ BEGIN_MESSAGE_MAP(ClibplayerdemoDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_NEXT, &ClibplayerdemoDlg::OnBnClickedButtonNext)
 	ON_WM_DESTROY()
 	ON_WM_TIMER()
-	ON_NOTIFY(NM_THEMECHANGED, IDC_SLIDER_PROGRESS, &ClibplayerdemoDlg::OnNMThemeChangedSliderProgress)
-	ON_NOTIFY(NM_RELEASEDCAPTURE, IDC_SLIDER_PROGRESS, &ClibplayerdemoDlg::OnNMReleasedcaptureSliderProgress)
-	ON_NOTIFY(TRBN_THUMBPOSCHANGING, IDC_SLIDER_PROGRESS, &ClibplayerdemoDlg::OnTRBNThumbPosChangingSliderProgress)
+	ON_NOTIFY(NM_RELEASEDCAPTURE, IDC_SLIDER_SEEK, &ClibplayerdemoDlg::OnNMReleasedcaptureSliderSeek)
+	ON_BN_CLICKED(IDC_BUTTON_SEEK, &ClibplayerdemoDlg::OnBnClickedButtonSeek)
 END_MESSAGE_MAP()
 
 
@@ -161,6 +165,9 @@ BOOL ClibplayerdemoDlg::OnInitDialog()
 	m_slider.SetRange(0, slider_steps);
 	m_slider.SetPos(0);
 
+	m_sliderSeek.SetRange(0, slider_steps);
+	m_sliderSeek.SetPos(0);
+	
 	{
 		ffplay_parameters parameters;
 		parameters.file_name = "test.mp3";
@@ -259,7 +266,7 @@ void ClibplayerdemoDlg::OnDestroy()
 void ClibplayerdemoDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	if (!paused && g_fileinfo.duration_seconds > 0) {
+	if (g_fileinfo.duration_seconds > 0) {
 		auto percent = play_pts / g_fileinfo.duration_seconds;
 		auto pos = int(percent * slider_steps);
 		if (pos != m_slider.GetPos())
@@ -271,33 +278,21 @@ void ClibplayerdemoDlg::OnTimer(UINT_PTR nIDEvent)
 }
 
 
-void ClibplayerdemoDlg::OnNMThemeChangedSliderProgress(NMHDR* pNMHDR, LRESULT* pResult)
+void ClibplayerdemoDlg::OnNMReleasedcaptureSliderSeek(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	// 该功能要求使用 Windows XP 或更高版本。
-	// 符号 _WIN32_WINNT 必须 >= 0x0501。
 	// TODO: 在此添加控件通知处理程序代码
-	*pResult = 0;
+	OnBnClickedButtonSeek();
 
+	*pResult = 0;
 }
 
 
-void ClibplayerdemoDlg::OnNMReleasedcaptureSliderProgress(NMHDR* pNMHDR, LRESULT* pResult)
+void ClibplayerdemoDlg::OnBnClickedButtonSeek()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	*pResult = 0;
-
-
-	auto percent = (double)m_slider.GetPos() / (double)slider_steps;
-	if (player->is_stream_ready())
+	auto percent = (double)m_sliderSeek.GetPos() / (double)slider_steps;
+	if (player->is_stream_ready()) {
 		player->request_seek_file(percent);
-}
-
-
-void ClibplayerdemoDlg::OnTRBNThumbPosChangingSliderProgress(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	// 此功能要求 Windows Vista 或更高版本。
-	// _WIN32_WINNT 符号必须 >= 0x0600。
-	NMTRBTHUMBPOSCHANGING* pNMTPC = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(pNMHDR);
-	// TODO: 在此添加控件通知处理程序代码
-	*pResult = 0;
+		_cprintf("\n%s \n", __FUNCTION__);
+	}
 }

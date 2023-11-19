@@ -30,6 +30,7 @@ class ClibplayerdemoDlg : public CDialogEx
 	std::shared_ptr<my_ffplayer_event> cb;
 	std::shared_ptr<ffplayer_interface> player;
 	CSliderCtrl m_slider;
+	CSliderCtrl m_sliderSeek;
 
 public:
 	ClibplayerdemoDlg(CWnd* pParent = nullptr);	// 标准构造函数
@@ -59,7 +60,6 @@ public:
 	afx_msg void OnBnClickedButtonNext();
 	afx_msg void OnDestroy();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnNMThemeChangedSliderProgress(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnNMReleasedcaptureSliderProgress(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnTRBNThumbPosChangingSliderProgress(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMReleasedcaptureSliderSeek(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBnClickedButtonSeek();
 };
