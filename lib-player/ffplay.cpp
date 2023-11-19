@@ -2194,6 +2194,11 @@ public:
                                         af->serial = is->auddec.pkt_serial;
                                         af->duration = av_q2d(AVRational(frame->nb_samples, frame->sample_rate));
 
+
+#if defined(DEBUG_SYNC)
+                                        av_log_ffplay(NULL, AV_LOG_INFO, "----- push audio , % lf \n", af->pts);
+#endif
+
                                         av_frame_move_ref(af->frame, frame);
                                         frame_queue_push(&is->sampq);
 
@@ -2575,6 +2580,10 @@ public:
                     frame_pts_begin = pts_pos = frame_pts_end = NAN;
                 }
 
+#if defined(DEBUG_SYNC)
+                av_log_ffplay(NULL, AV_LOG_INFO, "----- pop audio , % lf \n", af->pts);
+#endif
+
                 is->audio_clock_serial = af->serial;
                 return resampled_data_size;
         }
@@ -2607,8 +2616,6 @@ public:
 
                 if (is->paused) {
                     pre_pts = expect_next_pts = NAN;
-                    av_usleep(10 * one_ms);
-                    continue;
                 }
 
                 auto crt_systime = av_gettime_relative();
