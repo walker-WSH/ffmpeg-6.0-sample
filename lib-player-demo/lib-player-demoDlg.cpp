@@ -293,6 +293,6 @@ void ClibplayerdemoDlg::OnBnClickedButtonSeek()
 	auto percent = (double)m_sliderSeek.GetPos() / (double)slider_steps;
 	if (player->is_stream_ready()) {
 		player->request_seek_file(percent);
-		_cprintf("\n%s \n", __FUNCTION__);
+		_cprintf("\n%s %lf  %lf \n", __FUNCTION__, percent, percent * g_fileinfo.duration_seconds);
 	}
 }

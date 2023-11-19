@@ -2196,7 +2196,7 @@ public:
 
 
 #if defined(DEBUG_SYNC)
-                                        av_log_ffplay(NULL, AV_LOG_INFO, "----- push audio , % lf \n", af->pts);
+                                    //    av_log_ffplay(NULL, AV_LOG_INFO, "----- push audio , % lf \n", af->pts);
 #endif
 
                                         av_frame_move_ref(af->frame, frame);
